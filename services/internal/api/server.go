@@ -24,18 +24,27 @@ type Backend interface {
 type Server struct {
 	backend Backend
 	token   string
+	version string
 	log     *slog.Logger
 }
 
-func NewServer(backend Backend, token string, logger *slog.Logger) http.Handler {
-	s := &Server{backend: backend, token: token, log: logger}
+func NewServer(backend Backend, token, version string, logger *slog.Logger) http.Handler {
+	if version == "" {
+		version = "unknown"
+	}
+	s := &Server{backend: backend, token: token, version: version, log: logger}
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusNoContent) })
+	mux.HandleFunc("GET /version", s.versionInfo)
 	mux.Handle("POST /bots", s.auth(http.HandlerFunc(s.create)))
 	mux.Handle("GET /bots/{id}", s.auth(http.HandlerFunc(s.get)))
 	mux.Handle("GET /bots/{id}/artifact", s.auth(http.HandlerFunc(s.artifact)))
 	mux.Handle("POST /bots/{id}/cancel", s.auth(http.HandlerFunc(s.cancel)))
 	return mux
+}
+
+func (s *Server) versionInfo(w http.ResponseWriter, _ *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]string{"version": s.version})
 }
 
 func (s *Server) auth(next http.Handler) http.Handler {
@@ -86,7 +95,9 @@ func (s *Server) create(w http.ResponseWriter, r *http.Request) {
 		s.log.Warn("outbox dispatch delayed", "job_id", job.ID, "error", err)
 	}
 	status := http.StatusAccepted
-	if duplicate { status = http.StatusOK }
+	if duplicate {
+		status = http.StatusOK
+	}
 	w.Header().Set("Location", "/bots/"+job.ID)
 	writeJSON(w, status, job)
 }
@@ -94,7 +105,10 @@ func (s *Server) create(w http.ResponseWriter, r *http.Request) {
 func (s *Server) get(w http.ResponseWriter, r *http.Request) {
 	job, err := s.backend.GetJob(r.Context(), r.PathValue("id"))
 	if err != nil {
-		if err.Error() == "job not found" { writeError(w, http.StatusNotFound, "job not found"); return }
+		if err.Error() == "job not found" {
+			writeError(w, http.StatusNotFound, "job not found")
+			return
+		}
 		s.log.Error("failed to read bot job", "error", err)
 		writeError(w, http.StatusInternalServerError, "could not read job")
 		return
@@ -123,12 +137,17 @@ func (s *Server) artifact(w http.ResponseWriter, r *http.Request) {
 func (s *Server) cancel(w http.ResponseWriter, r *http.Request) {
 	job, err := s.backend.CancelJob(r.Context(), r.PathValue("id"))
 	if err != nil {
-		if err.Error() == "job not found" { writeError(w, http.StatusNotFound, "job not found"); return }
+		if err.Error() == "job not found" {
+			writeError(w, http.StatusNotFound, "job not found")
+			return
+		}
 		s.log.Error("failed to cancel bot job", "error", err)
 		writeError(w, http.StatusConflict, "job could not be cancelled")
 		return
 	}
-	if err := s.backend.DispatchOutbox(r.Context()); err != nil { s.log.Warn("cancel dispatch delayed", "job_id", job.ID, "error", err) }
+	if err := s.backend.DispatchOutbox(r.Context()); err != nil {
+		s.log.Warn("cancel dispatch delayed", "job_id", job.ID, "error", err)
+	}
 	writeJSON(w, http.StatusAccepted, job)
 }
 

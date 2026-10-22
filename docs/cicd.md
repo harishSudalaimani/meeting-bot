@@ -4,8 +4,8 @@
 
 The application workflow is `.github/workflows/ci-publish.yml`:
 
-1. Pull requests run Go formatting, vet, unit tests, build checks, Terraform validation, Helm lint, and Trivy scans.
-2. A merge to `main` builds and scans the four service images, then pushes immutable `git-<commit-sha>` tags to ECR using the existing ECR-only GitHub OIDC role.
+1. Pull requests run Go formatting, vet, unit tests, build checks, Terraform validation, and Helm lint.
+2. A merge to `main` builds the four service images and pushes immutable `git-<commit-sha>` tags to ECR using the existing ECR-only GitHub OIDC role.
 3. The workflow opens a pull request updating `kubernetes/chart/values-learning.yaml`.
 4. Merge the image update PR; Argo CD follows `main` and synchronizes the chart.
 

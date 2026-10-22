@@ -1,3 +1,4 @@
+appVersion: dev
 images:
   api: meeting-bot-api:bootstrap
   controller: meeting-bot-controller:bootstrap

@@ -137,6 +137,7 @@ The Application should become `Synced` and `Healthy`; the API, controller, deliv
 
 ```bash
 curl --fail --show-error https://api.example.com/healthz
+curl --fail --show-error https://api.example.com/version
 ```
 
 HTTP `204` is the expected health response. If Gateway, DNS, or target health is not ready, see the Gateway and DNS section in [`troubleshooting.md`](troubleshooting.md).

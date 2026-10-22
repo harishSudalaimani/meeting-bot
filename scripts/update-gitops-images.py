@@ -15,6 +15,9 @@ def main() -> int:
         return 2
     values_path = Path(values_name)
     text = values_path.read_text(encoding="utf-8")
+    text, count = re.subn(r"(?m)^appVersion:\s+\S+$", f"appVersion: {tag}", text)
+    if count != 1:
+        raise SystemExit(f"expected one appVersion value in {values_path}, found {count}")
     images = {
         "api": "api",
         "controller": "controller",
@@ -28,7 +31,7 @@ def main() -> int:
         if count != 1:
             raise SystemExit(f"expected one images.{key} value in {values_path}, found {count}")
     values_path.write_text(text, encoding="utf-8")
-    print(f"Updated image tags in {values_path}")
+    print(f"Updated app version and image tags in {values_path}")
     return 0
 
 

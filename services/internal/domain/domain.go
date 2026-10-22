@@ -9,16 +9,16 @@ import (
 )
 
 const (
-	Requested        = "REQUESTED"
-	Queued           = "QUEUED"
-	Starting         = "STARTING"
-	Joining          = "JOINING"
-	Recording        = "RECORDING"
-	Uploading        = "UPLOADING"
-	Completed        = "COMPLETED"
-	Failed           = "FAILED"
-	CancelRequested  = "CANCEL_REQUESTED"
-	Cancelled        = "CANCELLED"
+	Requested       = "REQUESTED"
+	Queued          = "QUEUED"
+	Starting        = "STARTING"
+	Joining         = "JOINING"
+	Recording       = "RECORDING"
+	Uploading       = "UPLOADING"
+	Completed       = "COMPLETED"
+	Failed          = "FAILED"
+	CancelRequested = "CANCEL_REQUESTED"
+	Cancelled       = "CANCELLED"
 )
 
 var ErrInvalidMeetingURL = errors.New("meetingUrl must be an HTTPS URL for a supported meeting provider")
@@ -44,15 +44,15 @@ type Job struct {
 }
 
 type Event struct {
-	Kind            string `json:"kind"`
-	JobID           string `json:"jobId"`
-	DurationSeconds int    `json:"durationSeconds,omitempty"`
+	Kind            string            `json:"kind"`
+	JobID           string            `json:"jobId"`
+	DurationSeconds int               `json:"durationSeconds,omitempty"`
 	TraceContext    map[string]string `json:"traceContext,omitempty"`
 }
 
 type DeliveryEvent struct {
-	JobID       string `json:"jobId"`
-	ArtifactKey string `json:"artifactKey"`
+	JobID        string            `json:"jobId"`
+	ArtifactKey  string            `json:"artifactKey"`
 	TraceContext map[string]string `json:"traceContext,omitempty"`
 }
 
@@ -74,7 +74,9 @@ func ValidateRequest(req CreateRequest) error {
 	return nil
 }
 
-func hostIsOrSubdomain(host, domain string) bool { return host == domain || strings.HasSuffix(host, "."+domain) }
+func hostIsOrSubdomain(host, domain string) bool {
+	return host == domain || strings.HasSuffix(host, "."+domain)
+}
 
 func IsTerminal(status string) bool {
 	return status == Completed || status == Failed || status == Cancelled

@@ -43,6 +43,8 @@ func ExtractTrace(ctx context.Context, values map[string]string) context.Context
 }
 
 func envOr(key, fallback string) string {
-	if value := os.Getenv(key); value != "" { return value }
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
 	return fallback
 }
