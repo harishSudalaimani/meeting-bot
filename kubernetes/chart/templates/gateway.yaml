@@ -13,11 +13,13 @@ metadata:
 spec:
   scheme: internet-facing
   ipAddressType: ipv4
-  wafv2AclArn: {{ .Values.edge.wafArn | quote }}
+  wafV2:
+    webACL: {{ .Values.edge.wafArn | quote }}
   listenerConfigurations:
     - protocolPort: HTTPS:443
       defaultCertificate: {{ .Values.edge.certificateArn | quote }}
       sslPolicy: ELBSecurityPolicy-TLS13-1-2-2021-06
+      alpnPolicy: None
   tags:
     Project: meeting-bot-platform
     Environment: learning
