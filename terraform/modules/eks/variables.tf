@@ -6,7 +6,10 @@ variable "private_subnet_ids" { type = list(string) }
 variable "vpc_id" { type = string }
 variable "project" { type = string }
 variable "common_tags" { type = map(string) }
-variable "api_repository" { type = string }
+variable "api_repository" {
+  description = "GitHub owner/repository trusted for the image-publish and Terraform-plan/apply OIDC roles."
+  type        = string
+}
 variable "workload_artifact_arn" { type = string }
 variable "dynamodb_table_arn" { type = string }
 variable "request_queue_arn" { type = string }

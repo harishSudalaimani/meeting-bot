@@ -1,0 +1,103 @@
+name: Terraform plan and apply
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - terraform/environments/learning/**
+      - terraform/modules/**
+      - terraform/policies/**
+      - .github/workflows/terraform-plan-apply.yml
+
+permissions:
+  contents: read
+
+# Queue runs so saved plans cannot race another learning infrastructure apply.
+concurrency:
+  group: terraform-state
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    if: vars.TF_CICD_ENABLED == 'true' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: terraform-plan
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      AWS_REGION: ap-south-1
+      TERRAFORM_TFVARS: ${{ secrets.TERRAFORM_TFVARS }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.TF_PLAN_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: gha-terraform-plan
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.16.6
+
+      - name: Configure learning environment inputs
+        run: |
+          test -n "$TERRAFORM_TFVARS" || { echo "Set TERRAFORM_TFVARS in the terraform-plan environment." >&2; exit 1; }
+          printf '%s' "$TERRAFORM_TFVARS" > terraform/environments/learning/terraform.tfvars
+
+      - name: Confirm account and migrated remote state
+        run: |
+          test "$(aws sts get-caller-identity --query Account --output text)" = "481665121849"
+          aws s3api head-object --bucket meeting-bot-tfstate-481665121849-ap-south-1 --key meeting-bot-platform/learning/terraform.tfstate >/dev/null
+
+      - name: Initialize, validate, and plan learning infrastructure
+        run: |
+          terraform fmt -check -recursive terraform
+
+          terraform -chdir=terraform/environments/learning init -input=false
+          terraform -chdir=terraform/environments/learning validate
+          terraform -chdir=terraform/environments/learning plan -input=false -lock-timeout=5m -no-color -out=tfplan
+          terraform -chdir=terraform/environments/learning show -no-color tfplan >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload saved plan for the protected apply job
+        if: github.event_name == 'push'
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plans
+          path: terraform/environments/learning/tfplan
+          retention-days: 1
+          if-no-files-found: error
+
+  apply:
+    if: vars.TF_CICD_ENABLED == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: plan
+    runs-on: ubuntu-latest
+    environment: terraform-apply
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      AWS_REGION: ap-south-1
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.TF_APPLY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: gha-terraform-apply
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.16.6
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: terraform-plans
+          path: terraform/environments/learning
+
+      - name: Apply the reviewed plans
+        run: |
+          terraform -chdir=terraform/environments/learning init -input=false
+          terraform -chdir=terraform/environments/learning apply -input=false tfplan

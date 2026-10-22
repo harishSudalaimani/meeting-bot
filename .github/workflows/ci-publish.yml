@@ -28,9 +28,15 @@ jobs:
       - name: Go format, vet, and tests
         working-directory: services
         run: |
-          gofmt -w .
+          unformatted=$(gofmt -l .)
+          if [[ -n "$unformatted" ]]; then
+            echo "These Go files need gofmt:"
+            echo "$unformatted"
+            exit 1
+          fi
           go vet ./...
           go test -race ./...
+          go build ./cmd/...
       - name: Terraform format and validate
         run: |
           terraform fmt -check -recursive terraform

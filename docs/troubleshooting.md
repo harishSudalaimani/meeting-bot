@@ -19,7 +19,7 @@ kubectl get events -A --sort-by=.lastTimestamp | tail -50
 - State lock: first check whether another Terraform process is active. Do not force-unlock an active operation. `terraform force-unlock <LOCK_ID>` is only for a confirmed abandoned lock.
 - Plan changes in VPC/EKS/IAM are owned by Terraform. Karpenter EC2 nodes are not declared in Terraform and their variable count is expected. Do not import Karpenter instances. Inspect with `kubectl get nodeclaims` and `aws ec2 describe-instances --filters Name=tag:Project,Values=meeting-bot-platform`.
 - For accidental manual changes, inspect `terraform plan` and use `-refresh-only` to understand drift before deciding. Do not accept a destroy/recreate plan without understanding its impact.
-- The two roots use separate local state files. Preserve `terraform.tfstate` until teardown has completed and leftovers are verified.
+- The two roots use separate S3 state keys after the one-time migration. Preserve local state backups until the S3 state and CI plans have been verified; never commit either copy.
 
 ## IAM and access entries
 
@@ -32,7 +32,7 @@ kubectl get events -A --sort-by=.lastTimestamp | tail -50
 
 - `AccessDenied` from the load balancer controller: inspect `kubectl -n kube-system logs deployment/aws-load-balancer-controller`, compare the policy with the pinned controller's [official IAM policy](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.6.0/docs/install/iam_policy.json), and verify its IRSA trust.
 - If a node fails to join, verify the Karpenter node role's `EC2_LINUX` access entry exists (`aws eks list-access-entries --cluster-name meeting-bot-learning --region ap-south-1`). The managed node group's role is auto-mapped by EKS; do not add a duplicate manual entry.
-- GitHub OIDC failures: verify the trust subject exactly matches `repo:<owner>/<repo>:ref:refs/heads/main`; the workflow only publishes on `main`, and `AWS_ROLE_ARN` must be the Terraform `ci_role_arn` output.
+- GitHub OIDC publish failures: verify the trust subject exactly matches `repo:<owner>/<repo>:ref:refs/heads/main`; the image workflow uses `AWS_ROLE_ARN`, which is the ECR-only `ci_role_arn` output. Terraform uses separate environment-scoped plan and apply roles; see [docs/cicd.md](cicd.md).
 
 ## Gateway, ALB, certificate, WAF, and DNS
 

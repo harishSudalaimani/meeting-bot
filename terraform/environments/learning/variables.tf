@@ -62,7 +62,7 @@ variable "api_subdomain" {
 }
 
 variable "github_repository" {
-  description = "Optional owner/repository allowed to assume the CI publish role, e.g. acme/meeting-bot-platform. Empty disables that role."
+  description = "Optional owner/repository allowed to assume the ECR publish and Terraform plan/apply roles, e.g. acme/meeting-bot-platform. Empty disables those roles."
   type        = string
   default     = ""
 }
