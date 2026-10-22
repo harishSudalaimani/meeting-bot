@@ -61,6 +61,7 @@
         "elasticloadbalancing:CreateRule", "elasticloadbalancing:DeleteRule",
         "elasticloadbalancing:AddTags", "elasticloadbalancing:RemoveTags",
         "elasticloadbalancing:ModifyLoadBalancerAttributes", "elasticloadbalancing:SetIpAddressType",
+        "elasticloadbalancing:SetWebACL",
         "elasticloadbalancing:SetSecurityGroups", "elasticloadbalancing:SetSubnets",
         "elasticloadbalancing:DeleteLoadBalancer", "elasticloadbalancing:ModifyTargetGroup",
         "elasticloadbalancing:ModifyTargetGroupAttributes", "elasticloadbalancing:DeleteTargetGroup",
