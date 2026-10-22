@@ -61,21 +61,12 @@ ExternalDNS reads only `gateway-httproute` objects in `meeting-bot`, filtered to
 
 ## Terraform state
 
-The checked-in roots use local state so the demo needs no bootstrap bucket. State includes infrastructure identifiers and sensitive values; do not commit it. For shared work, use a dedicated S3 bucket created separately with public access blocked, versioning enabled, and SSE-KMS or SSE-S3 encryption. Use separate keys for the two roots and native S3 state locking:
+Both Terraform roots are configured to use the dedicated S3 bucket `meeting-bot-tfstate-481665121849-ap-south-1` in `ap-south-1`. It has public access blocked, bucket-owner-enforced ownership, default SSE-S3 encryption, versioning enabled, and a TLS-only bucket policy. The roots use separate state keys and native S3 lockfiles:
 
-```hcl
-terraform {
-  backend "s3" {
-    bucket       = "your-dedicated-terraform-state-bucket"
-    key          = "meeting-bot-platform/learning/terraform.tfstate"
-    region       = "ap-south-1"
-    encrypt      = true
-    use_lockfile = true
-  }
-}
-```
+- `meeting-bot-platform/learning/terraform.tfstate`
+- `meeting-bot-platform/cluster-addons/terraform.tfstate`
 
-For `cluster-addons`, use key `meeting-bot-platform/cluster-addons/terraform.tfstate`. Update its `data.terraform_remote_state.infra` block to `backend = "s3"` with the learning key and same bucket/region. Then run `terraform init -migrate-state` in each root and retain S3 object versions. Keep backend bucket creation and its IAM access separate so teardown cannot delete the state needed to clean up the cluster.
+The add-ons root reads the learning root's state from the first key. State can contain sensitive values; never commit state files or saved plan files. Run `terraform init -migrate-state` in each root once to move the existing local states to S3. Keep the bucket outside the cluster Terraform roots so teardown cannot delete the state needed to clean up the cluster.
 
 ## Customer-owned S3 delivery
 

@@ -118,7 +118,7 @@ scripts/deploy.sh --apply
 
 The script never creates the Route 53 hosted zone. ACM DNS validation adds only its validation CNAME record. ExternalDNS is scoped to the supplied zone and API hostname, uses a unique TXT owner, and synchronizes only its owned records.
 
-Terraform uses local state by default. This is acceptable for an isolated learning demo, not for shared or durable operations. See [docs/architecture.md](docs/architecture.md#terraform-state) for the encrypted, versioned S3 backend setup.
+Terraform is configured for encrypted, versioned S3 state with native locking. Migrate the existing local state files before running further plans or applies; see [docs/cicd.md](docs/cicd.md#one-time-state-migration).
 
 ## Publish and deploy the application
 
@@ -133,7 +133,9 @@ scripts/connect-gitops.sh https://github.com/OWNER/REPOSITORY.git
 
 The build script creates four immutable ECR image tags, then writes Terraform output identifiers and the image references to `kubernetes/chart/values-learning.yaml`. Review and commit that file. For a private GitHub repository, register it with Argo CD using your approved Git credentials before applying the Application. The API token is saved in `.local/api-token`; treat it as a password.
 
-The optional `.github/workflows/ci-publish.yml` runs on pull requests and pushes to `main`. For automated publish, configure `github_repository` in Terraform, then set GitHub repository variables `AWS_ROLE_ARN`, `AWS_REGION`, and `ECR_REPOSITORY_PREFIX`. The workflow uses GitHub OIDC, immutable commit tags, Trivy source/image scans, and opens a pull request with the GitOps image update. Merge that reviewed PR to `main` for Argo CD to deploy it.
+The `.github/workflows/ci-publish.yml` runs application checks on pull requests. On `main`, it uses GitHub OIDC to build and scan immutable images, push them to ECR, and open a pull request updating the GitOps image tags. Merge that reviewed PR to `main` for Argo CD to deploy it.
+
+Terraform plan and approval-gated apply automation uses GitHub-hosted runners in `.github/workflows/terraform-plan-apply.yml`. Follow [docs/cicd.md](docs/cicd.md) to migrate the local state and configure the GitHub environments and OIDC roles before enabling it. Cluster add-ons stay manual because the EKS API is restricted to approved network ranges.
 
 ## Verify the full workflow
 
