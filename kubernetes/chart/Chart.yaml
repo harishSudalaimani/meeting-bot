@@ -1,0 +1,6 @@
+apiVersion: v2
+name: meeting-bot-platform
+description: Learning demo API, asynchronous controller, simulator, delivery worker, and ingress
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

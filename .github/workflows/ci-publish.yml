@@ -1,0 +1,106 @@
+name: CI and publish
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+    paths-ignore:
+      - kubernetes/chart/values-learning.yaml
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.24.1'
+          cache-dependency-path: services/go.mod
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.16.6
+      - uses: azure/setup-helm@v4
+        with:
+          version: v4.3.0
+      - name: Go format, vet, and tests
+        working-directory: services
+        run: |
+          gofmt -w .
+          go vet ./...
+          go test -race ./...
+      - name: Terraform format and validate
+        run: |
+          terraform fmt -check -recursive terraform
+          terraform -chdir=terraform/environments/learning init -backend=false -input=false
+          terraform -chdir=terraform/environments/learning validate
+          terraform -chdir=terraform/environments/cluster-addons init -backend=false -input=false
+          terraform -chdir=terraform/environments/cluster-addons validate
+      - name: Helm chart lint
+        run: helm lint kubernetes/chart -f kubernetes/chart/values-learning.yaml
+      - name: Dependency and source scan
+        uses: aquasecurity/trivy-action@0.31.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,secret,misconfig
+          severity: CRITICAL,HIGH
+          exit-code: '1'
+
+  publish:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.AWS_ROLE_ARN != ''
+    needs: validate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      pull-requests: write
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION || 'ap-south-1' }}
+      ECR_REPOSITORY_PREFIX: ${{ vars.ECR_REPOSITORY_PREFIX || 'meeting-bot-learning' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+      - uses: aws-actions/amazon-ecr-login@v2
+      - uses: docker/setup-buildx-action@v3
+      - uses: aquasecurity/trivy-action@0.31.0
+        with:
+          scan-type: fs
+          scan-ref: services
+          scanners: vuln,secret
+          severity: CRITICAL,HIGH
+          exit-code: '1'
+      - name: Build, scan, and push immutable images
+        env:
+          IMAGE_TAG: git-${{ github.sha }}
+        run: |
+          account=$(aws sts get-caller-identity --query Account --output text)
+          registry="${account}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+          for service in api controller meeting-bot delivery-worker; do
+            repository="${registry}/${ECR_REPOSITORY_PREFIX}/${service}"
+            docker buildx build --load --file services/Dockerfile --build-arg "SERVICE=${service}" --tag "${repository}:${IMAGE_TAG}" services
+            docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:0.68.1 image --exit-code 1 --severity CRITICAL,HIGH "${repository}:${IMAGE_TAG}"
+            docker push "${repository}:${IMAGE_TAG}"
+          done
+          echo "registry=${registry}" >> "$GITHUB_ENV"
+      - name: Update GitOps image references
+        env:
+          IMAGE_TAG: git-${{ github.sha }}
+        run: |
+          python3 scripts/update-gitops-images.py "$registry" "$ECR_REPOSITORY_PREFIX" "$IMAGE_TAG" kubernetes/chart/values-learning.yaml
+      - uses: peter-evans/create-pull-request@v7
+        with:
+          branch: automation/publish-meeting-bot-images
+          delete-branch: true
+          add-paths: kubernetes/chart/values-learning.yaml
+          commit-message: "chore(gitops): publish git-${{ github.sha }}"
+          title: "chore(gitops): publish git-${{ github.sha }}"
+          body: |
+            Updates the four application images to immutable ECR tag `git-${{ github.sha }}`.
+
+            The source commit passed the CI validation and image vulnerability scan before this pull request was created.

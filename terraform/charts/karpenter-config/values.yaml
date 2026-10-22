@@ -1,0 +1,6 @@
+nodeRoleName: ""
+clusterName: ""
+region: "ap-south-1"
+maxCPU: "8"
+amiAlias: "al2023@latest"
+commonTags: {}

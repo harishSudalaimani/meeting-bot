@@ -1,0 +1,14 @@
+images:
+  api: meeting-bot-api:bootstrap
+  controller: meeting-bot-controller:bootstrap
+  meetingBot: meeting-bot-simulator:bootstrap
+  deliveryWorker: meeting-bot-delivery-worker:bootstrap
+edge:
+  hostname: api.example.com
+  certificateArn: arn:aws:acm:ap-south-1:000000000000:certificate/replace-me
+  wafArn: arn:aws:wafv2:ap-south-1:000000000000:regional/webacl/replace-me
+  apiReplicas: 1
+  controllerReplicas: 1
+observability:
+  region: ap-south-1
+  collectorImage: public.ecr.aws/aws-observability/aws-otel-collector:v0.50.0

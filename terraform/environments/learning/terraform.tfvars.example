@@ -1,0 +1,21 @@
+region              = "ap-south-1"
+environment         = "learning"
+project             = "meeting-bot-platform"
+owner_tag           = "replace-with-your-name"
+cluster_name        = "meeting-bot-learning"
+kubernetes_version  = "1.36"
+admin_cidrs          = ["203.0.113.10/32"]
+hosted_zone_id       = "Z0123456789EXAMPLE"
+domain_name          = "example.com"
+api_subdomain        = "api"
+monthly_budget_usd   = 20
+budget_alert_email   = ""
+
+# Optional GitHub Actions OIDC publish role. Set owner/repository to enable it.
+github_repository = ""
+github_oidc_provider_arn = ""
+
+# Optional cross-account S3 delivery. Keep all three empty to disable it.
+delivery_bucket                  = ""
+delivery_destination_role_arn    = ""
+delivery_destination_account_id  = ""

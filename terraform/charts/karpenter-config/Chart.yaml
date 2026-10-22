@@ -1,0 +1,6 @@
+apiVersion: v2
+name: karpenter-config
+description: Terraform-installed Karpenter NodeClass and NodePool for the demo
+type: application
+version: 0.1.0
+appVersion: "1.15.0"

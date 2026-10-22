@@ -1,0 +1,76 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": ["iam:CreateServiceLinkedRole"],
+      "Resource": "*",
+      "Condition": {"StringEquals": {"iam:AWSServiceName": "elasticloadbalancing.amazonaws.com"}}
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "ec2:DescribeAccountAttributes", "ec2:DescribeAddresses", "ec2:DescribeAvailabilityZones",
+        "ec2:DescribeInternetGateways", "ec2:DescribeVpcs", "ec2:DescribeVpcPeeringConnections",
+        "ec2:DescribeSubnets", "ec2:DescribeSecurityGroups", "ec2:DescribeInstances",
+        "ec2:DescribeNetworkInterfaces", "ec2:DescribeTags", "ec2:GetCoipPoolUsage",
+        "ec2:DescribeCoipPools", "ec2:GetSecurityGroupsForVpc", "ec2:DescribeIpamPools",
+        "ec2:DescribeRouteTables", "elasticloadbalancing:DescribeLoadBalancers",
+        "elasticloadbalancing:DescribeLoadBalancerAttributes", "elasticloadbalancing:DescribeListeners",
+        "elasticloadbalancing:DescribeListenerCertificates", "elasticloadbalancing:DescribeSSLPolicies",
+        "elasticloadbalancing:DescribeRules", "elasticloadbalancing:DescribeTargetGroups",
+        "elasticloadbalancing:DescribeTargetGroupAttributes", "elasticloadbalancing:DescribeTargetHealth",
+        "elasticloadbalancing:DescribeTags", "elasticloadbalancing:DescribeTrustStores",
+        "elasticloadbalancing:DescribeListenerAttributes", "acm:ListCertificates", "acm:DescribeCertificate",
+        "wafv2:GetWebACL", "wafv2:GetWebACLForResource", "wafv2:AssociateWebACL", "wafv2:DisassociateWebACL"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": ["ec2:AuthorizeSecurityGroupIngress", "ec2:RevokeSecurityGroupIngress"],
+      "Resource": "*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": ["ec2:CreateSecurityGroup"],
+      "Resource": "*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": ["ec2:DeleteSecurityGroup"],
+      "Resource": "arn:aws:ec2:*:*:security-group/*",
+      "Condition": {"Null": {"aws:ResourceTag/elbv2.k8s.aws/cluster": "false"}}
+    },
+    {
+      "Effect": "Allow",
+      "Action": ["ec2:CreateTags", "ec2:DeleteTags"],
+      "Resource": "arn:aws:ec2:*:*:security-group/*",
+      "Condition": {"Null": {"aws:RequestTag/elbv2.k8s.aws/cluster": "false"}}
+    },
+    {
+      "Effect": "Allow",
+      "Action": ["elasticloadbalancing:CreateLoadBalancer", "elasticloadbalancing:CreateTargetGroup"],
+      "Resource": "*",
+      "Condition": {"Null": {"aws:RequestTag/elbv2.k8s.aws/cluster": "false"}}
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "elasticloadbalancing:CreateListener", "elasticloadbalancing:DeleteListener",
+        "elasticloadbalancing:CreateRule", "elasticloadbalancing:DeleteRule",
+        "elasticloadbalancing:AddTags", "elasticloadbalancing:RemoveTags",
+        "elasticloadbalancing:ModifyLoadBalancerAttributes", "elasticloadbalancing:SetIpAddressType",
+        "elasticloadbalancing:SetSecurityGroups", "elasticloadbalancing:SetSubnets",
+        "elasticloadbalancing:DeleteLoadBalancer", "elasticloadbalancing:ModifyTargetGroup",
+        "elasticloadbalancing:ModifyTargetGroupAttributes", "elasticloadbalancing:DeleteTargetGroup",
+        "elasticloadbalancing:ModifyListenerAttributes", "elasticloadbalancing:RegisterTargets",
+        "elasticloadbalancing:DeregisterTargets", "elasticloadbalancing:ModifyListener",
+        "elasticloadbalancing:AddListenerCertificates", "elasticloadbalancing:RemoveListenerCertificates",
+        "elasticloadbalancing:ModifyRule", "elasticloadbalancing:SetRulePriorities"
+      ],
+      "Resource": "*",
+      "Condition": {"Null": {"aws:ResourceTag/elbv2.k8s.aws/cluster": "false"}}
+    }
+  ]
+}

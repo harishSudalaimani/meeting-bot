@@ -1,0 +1,3 @@
+API host: {{ .Values.edge.hostname }}
+The API is available through the internet-facing ALB after its Gateway is programmed and ExternalDNS publishes the dedicated A alias.
+The backend target group uses HTTPS to the Pod; its TLS key is created locally by scripts/create-api-secrets.sh and is never committed.

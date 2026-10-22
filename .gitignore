@@ -1,0 +1,15 @@
+# Terraform state and generated provider files
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+terraform.tfvars
+
+# Locally generated credentials and test results
+.local/
+*.test
+coverage.out
+
+# Go tooling cache files
+services/go.sum.tmp

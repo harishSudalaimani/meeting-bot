@@ -1,0 +1,15 @@
+output "cluster_name" { value = aws_eks_cluster.this.name }
+output "cluster_endpoint" { value = aws_eks_cluster.this.endpoint }
+output "cluster_certificate_authority_data" { value = aws_eks_cluster.this.certificate_authority[0].data }
+output "karpenter_controller_role_arn" { value = aws_iam_role.karpenter_controller.arn }
+output "karpenter_node_role_name" { value = aws_iam_role.karpenter_node.name }
+output "load_balancer_controller_role_arn" { value = aws_iam_role.load_balancer_controller.arn }
+output "external_dns_role_arn" { value = aws_iam_role.external_dns.arn }
+output "ci_role_arn" { value = try(aws_iam_role.ci[0].arn, "") }
+output "api_role_arn" { value = aws_iam_role.api.arn }
+output "controller_role_arn" { value = aws_iam_role.controller.arn }
+output "meeting_bot_role_arn" { value = aws_iam_role.meeting_bot.arn }
+output "delivery_role_arn" { value = aws_iam_role.delivery.arn }
+output "api_repository" { value = var.api_repository }
+output "karpenter_ami_alias" { value = "al2023@${regex("v[0-9]{8}", jsondecode(data.aws_ssm_parameter.recommended_ami.value).image_name)}" }
+output "otel_collector_role_arn" { value = aws_iam_role.otel_collector.arn }

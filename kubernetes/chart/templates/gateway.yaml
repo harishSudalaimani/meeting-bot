@@ -1,0 +1,92 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: aws-alb
+spec:
+  controllerName: gateway.k8s.aws/alb
+---
+apiVersion: gateway.k8s.aws/v1
+kind: LoadBalancerConfiguration
+metadata:
+  name: bot-api
+  namespace: meeting-bot
+spec:
+  scheme: internet-facing
+  ipAddressType: ipv4
+  wafv2AclArn: {{ .Values.edge.wafArn | quote }}
+  listenerConfigurations:
+    - protocolPort: HTTPS:443
+      defaultCertificate: {{ .Values.edge.certificateArn | quote }}
+      sslPolicy: ELBSecurityPolicy-TLS13-1-2-2021-06
+  tags:
+    - { key: Project, value: meeting-bot-platform }
+    - { key: Environment, value: learning }
+    - { key: ManagedBy, value: terraform }
+---
+apiVersion: gateway.k8s.aws/v1
+kind: TargetGroupConfiguration
+metadata:
+  name: bot-api
+  namespace: meeting-bot
+spec:
+  targetReference:
+    group: ""
+    kind: Service
+    name: bot-api
+  defaultConfiguration:
+    targetType: ip
+    protocol: HTTPS
+    protocolVersion: HTTP1
+    healthCheckConfig:
+      healthCheckProtocol: HTTPS
+      healthCheckPath: /healthz
+      matcher:
+        httpCode: "200,204"
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: bot-api
+  namespace: meeting-bot
+spec:
+  gatewayClassName: aws-alb
+  infrastructure:
+    parametersRef:
+      group: gateway.k8s.aws
+      kind: LoadBalancerConfiguration
+      name: bot-api
+  listeners:
+    - name: https
+      hostname: {{ .Values.edge.hostname | quote }}
+      port: 443
+      protocol: HTTPS
+      tls:
+        mode: Terminate
+        # The AWS LBC reads the ACM ARN from LoadBalancerConfiguration, not this marker.
+        options:
+          gateway.k8s.aws/certificate-source: acm
+      allowedRoutes:
+        namespaces:
+          from: Same
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: bot-api
+  namespace: meeting-bot
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: {{ .Values.edge.hostname | quote }}
+spec:
+  parentRefs:
+    - name: bot-api
+      sectionName: https
+  hostnames:
+    - {{ .Values.edge.hostname | quote }}
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: bot-api
+          port: 8443

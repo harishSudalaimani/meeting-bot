@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: delivery-worker
+  labels: { app.kubernetes.io/name: delivery-worker }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app.kubernetes.io/name: delivery-worker }
+  template:
+    metadata:
+      labels: { app.kubernetes.io/name: delivery-worker }
+    spec:
+      serviceAccountName: delivery-worker
+      nodeSelector: { workload: platform }
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile: { type: RuntimeDefault }
+      containers:
+        - name: delivery-worker
+          image: {{ .Values.images.deliveryWorker | quote }}
+          imagePullPolicy: IfNotPresent
+          envFrom: [{ configMapRef: { name: meeting-bot-config } }]
+          env:
+            - { name: OTEL_SERVICE_NAME, value: delivery-worker }
+            - { name: OTEL_EXPORTER_OTLP_ENDPOINT, value: "http://otel-collector.observability.svc.cluster.local:4318" }
+          resources:
+            requests: { cpu: 100m, memory: 128Mi }
+            limits: { cpu: 500m, memory: 512Mi }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: [ALL] }
