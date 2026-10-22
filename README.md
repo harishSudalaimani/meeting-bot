@@ -133,7 +133,7 @@ scripts/connect-gitops.sh https://github.com/OWNER/REPOSITORY.git
 
 The build script creates four immutable ECR image tags, then writes Terraform output identifiers and the image references to `kubernetes/chart/values-learning.yaml`. Review and commit that file. For a private GitHub repository, register it with Argo CD using your approved Git credentials before applying the Application. The API token is saved in `.local/api-token`; treat it as a password.
 
-The `.github/workflows/ci-publish.yml` runs application checks on pull requests. On `main`, it uses GitHub OIDC to build and scan immutable images, push them to ECR, and open a pull request updating the GitOps image tags. Merge that reviewed PR to `main` for Argo CD to deploy it.
+The `.github/workflows/ci-publish.yml` runs application checks on pull requests. On `main`, it uses GitHub OIDC to build immutable images, push them to ECR, and open a pull request updating the GitOps image tags. Merge that reviewed PR to `main` for Argo CD to deploy it.
 
 Terraform plan and approval-gated apply automation uses GitHub-hosted runners in `.github/workflows/terraform-plan-apply.yml`. Follow [docs/cicd.md](docs/cicd.md) to migrate the local state and configure the GitHub environments and OIDC roles before enabling it. Cluster add-ons stay manual because the EKS API is restricted to approved network ranges.
 
