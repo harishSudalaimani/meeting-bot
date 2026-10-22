@@ -11,7 +11,7 @@ api_subdomain        = "api"
 monthly_budget_usd   = 20
 budget_alert_email   = ""
 
-# Optional GitHub Actions OIDC roles. Set owner/repository to enable image publish and Terraform plan/apply roles.
+# Optional GitHub Actions OIDC roles. Use OWNER@OWNER_ID/REPOSITORY@REPOSITORY_ID for immutable GitHub OIDC subjects.
 github_repository = ""
 github_oidc_provider_arn = ""
 

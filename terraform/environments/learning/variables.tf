@@ -62,9 +62,13 @@ variable "api_subdomain" {
 }
 
 variable "github_repository" {
-  description = "Optional owner/repository allowed to assume the ECR publish and Terraform plan/apply roles, e.g. acme/meeting-bot-platform. Empty disables those roles."
+  description = "Optional immutable GitHub OIDC subject prefix allowed to assume the ECR publish and Terraform plan/apply roles, e.g. OWNER@OWNER_ID/REPOSITORY@REPOSITORY_ID. Empty disables those roles."
   type        = string
   default     = ""
+  validation {
+    condition     = var.github_repository == "" || can(regex("^[^/@]+@[0-9]+/[^/@]+@[0-9]+$", var.github_repository))
+    error_message = "Set github_repository to OWNER@OWNER_ID/REPOSITORY@REPOSITORY_ID for GitHub immutable OIDC subjects."
+  }
 }
 
 variable "github_oidc_provider_arn" {

@@ -7,7 +7,7 @@ variable "vpc_id" { type = string }
 variable "project" { type = string }
 variable "common_tags" { type = map(string) }
 variable "api_repository" {
-  description = "GitHub owner/repository trusted for the image-publish and Terraform-plan/apply OIDC roles."
+  description = "GitHub immutable OIDC repository subject prefix (OWNER@OWNER_ID/REPOSITORY@REPOSITORY_ID), trusted for image-publish and Terraform-plan/apply roles."
   type        = string
 }
 variable "workload_artifact_arn" { type = string }

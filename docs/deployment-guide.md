@@ -55,7 +55,7 @@ ${EDITOR:-nano} terraform.tfvars
 
 Set the existing **public** hosted-zone ID and domain, your API subdomain, and your current public IPv4 CIDR with `/32` in `admin_cidrs`. Set `owner_tag`; optionally set `budget_alert_email`. Leave all delivery settings empty unless the destination role and bucket policy are already prepared.
 
-If you want the GitHub Actions publisher, set `github_repository = "OWNER/REPOSITORY"` now, before Terraform creates the IAM role. Otherwise leave it empty and use the manual image publishing command in step 7. Never commit `terraform.tfvars`; it is gitignored.
+If you want the GitHub Actions publisher, set `github_repository = "OWNER@OWNER_ID/REPOSITORY@REPOSITORY_ID"` now, before Terraform creates the IAM role. Otherwise leave it empty and use the manual image publishing command in step 7. Never commit `terraform.tfvars`; it is gitignored.
 
 ## 5. Review costs, run preflight, and inspect the plan
 
