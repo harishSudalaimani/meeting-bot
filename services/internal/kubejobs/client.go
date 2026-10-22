@@ -14,21 +14,33 @@ import (
 	"github.com/example/meeting-bot-platform/services/internal/domain"
 )
 
-type Client struct { http *http.Client; endpoint string; token string }
+type Client struct {
+	http     *http.Client
+	endpoint string
+	token    string
+}
 
 func New() (*Client, error) {
 	host := os.Getenv("KUBERNETES_SERVICE_HOST")
 	port := os.Getenv("KUBERNETES_SERVICE_PORT_HTTPS")
-	if port == "" { port = "443" }
-	if host == "" { return nil, fmt.Errorf("in-cluster Kubernetes API is unavailable") }
+	if port == "" {
+		port = "443"
+	}
+	if host == "" {
+		return nil, fmt.Errorf("in-cluster Kubernetes API is unavailable")
+	}
 	token, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/token")
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	return &Client{http: &http.Client{Timeout: 30 * time.Second}, endpoint: "https://" + host + ":" + port, token: strings.TrimSpace(string(token))}, nil
 }
 
 func (c *Client) CreateMeetingJob(ctx context.Context, event domain.Event) error {
 	image := os.Getenv("MEETING_BOT_IMAGE")
-	if image == "" { return fmt.Errorf("MEETING_BOT_IMAGE is required") }
+	if image == "" {
+		return fmt.Errorf("MEETING_BOT_IMAGE is required")
+	}
 	jobName := "meeting-" + strings.ToLower(event.JobID)
 	job := map[string]any{
 		"apiVersion": "batch/v1", "kind": "Job",
@@ -37,8 +49,8 @@ func (c *Client) CreateMeetingJob(ctx context.Context, event domain.Event) error
 			"backoffLimit": 0, "activeDeadlineSeconds": 3700, "ttlSecondsAfterFinished": 180,
 			"template": map[string]any{"metadata": map[string]any{"labels": map[string]string{"app.kubernetes.io/name": "meeting-bot", "meeting-bot/job-id": event.JobID}}, "spec": map[string]any{
 				"serviceAccountName": "meeting-bot", "restartPolicy": "Never", "terminationGracePeriodSeconds": 30,
-				"nodeSelector": map[string]string{"workload": "meeting-bot"},
-				"tolerations": []any{map[string]string{"key": "workload", "operator": "Equal", "value": "meeting-bot", "effect": "NoSchedule"}},
+				"nodeSelector":    map[string]string{"workload": "meeting-bot"},
+				"tolerations":     []any{map[string]string{"key": "workload", "operator": "Equal", "value": "meeting-bot", "effect": "NoSchedule"}},
 				"securityContext": map[string]any{"runAsNonRoot": true, "runAsUser": 10001, "runAsGroup": 10001, "seccompProfile": map[string]string{"type": "RuntimeDefault"}},
 				"containers": []any{map[string]any{"name": "meeting-bot", "image": image, "imagePullPolicy": "IfNotPresent", "env": []any{
 					map[string]string{"name": "JOB_ID", "value": event.JobID}, map[string]string{"name": "DURATION_SECONDS", "value": fmt.Sprint(event.DurationSeconds)},
@@ -63,7 +75,9 @@ func (c *Client) CreateMeetingJob(ctx context.Context, event domain.Event) error
 	}
 	container["env"] = env
 	body, err := json.Marshal(job)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	return c.request(ctx, http.MethodPost, "/apis/batch/v1/namespaces/meeting-bot/jobs", body, http.StatusCreated, http.StatusConflict)
 }
 
@@ -75,13 +89,21 @@ func (c *Client) DeleteMeetingJob(ctx context.Context, jobID string) error {
 
 func (c *Client) request(ctx context.Context, method, path string, body []byte, accepted ...int) error {
 	req, err := http.NewRequestWithContext(ctx, method, c.endpoint+path, bytes.NewReader(body))
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	req.Header.Set("Authorization", "Bearer "+c.token)
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := c.http.Do(req)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	defer resp.Body.Close()
 	data, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
-	for _, code := range accepted { if resp.StatusCode == code { return nil } }
+	for _, code := range accepted {
+		if resp.StatusCode == code {
+			return nil
+		}
+	}
 	return fmt.Errorf("Kubernetes API returned %s: %s", resp.Status, strings.TrimSpace(string(data)))
 }
