@@ -182,7 +182,6 @@ resource "helm_release" "external_dns" {
     policy           = "sync"
     registry         = "txt"
     txtOwnerId       = local.infra.cluster_name
-    domainFilters    = [local.infra.api_hostname]
     gatewayNamespace = "meeting-bot"
     serviceAccount = {
       create      = true
