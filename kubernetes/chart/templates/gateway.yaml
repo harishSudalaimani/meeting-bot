@@ -19,9 +19,9 @@ spec:
       defaultCertificate: {{ .Values.edge.certificateArn | quote }}
       sslPolicy: ELBSecurityPolicy-TLS13-1-2-2021-06
   tags:
-    - { key: Project, value: meeting-bot-platform }
-    - { key: Environment, value: learning }
-    - { key: ManagedBy, value: terraform }
+    Project: meeting-bot-platform
+    Environment: learning
+    ManagedBy: terraform
 ---
 apiVersion: gateway.k8s.aws/v1
 kind: TargetGroupConfiguration
