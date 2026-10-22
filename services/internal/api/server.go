@@ -24,18 +24,27 @@ type Backend interface {
 type Server struct {
 	backend Backend
 	token   string
+	version string
 	log     *slog.Logger
 }
 
-func NewServer(backend Backend, token string, logger *slog.Logger) http.Handler {
-	s := &Server{backend: backend, token: token, log: logger}
+func NewServer(backend Backend, token, version string, logger *slog.Logger) http.Handler {
+	if version == "" {
+		version = "unknown"
+	}
+	s := &Server{backend: backend, token: token, version: version, log: logger}
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusNoContent) })
+	mux.HandleFunc("GET /version", s.versionInfo)
 	mux.Handle("POST /bots", s.auth(http.HandlerFunc(s.create)))
 	mux.Handle("GET /bots/{id}", s.auth(http.HandlerFunc(s.get)))
 	mux.Handle("GET /bots/{id}/artifact", s.auth(http.HandlerFunc(s.artifact)))
 	mux.Handle("POST /bots/{id}/cancel", s.auth(http.HandlerFunc(s.cancel)))
 	return mux
+}
+
+func (s *Server) versionInfo(w http.ResponseWriter, _ *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]string{"version": s.version})
 }
 
 func (s *Server) auth(next http.Handler) http.Handler {

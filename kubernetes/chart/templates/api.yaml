@@ -23,6 +23,8 @@ spec:
           ports: [{ name: https, containerPort: 8443 }]
           envFrom: [{ configMapRef: { name: meeting-bot-config } }]
           env:
+            - name: APP_VERSION
+              value: {{ .Values.appVersion | default "dev" | quote }}
             - name: API_BEARER_TOKEN
               valueFrom: { secretKeyRef: { name: meeting-bot-api-auth, key: token } }
             - name: TLS_CERT_FILE

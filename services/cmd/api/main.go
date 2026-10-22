@@ -26,7 +26,7 @@ func main() {
 	if err != nil { logger.Error("AWS client initialization failed", "error", err); os.Exit(1) }
 	token := os.Getenv("API_BEARER_TOKEN")
 	if token == "" { logger.Error("API_BEARER_TOKEN is required"); os.Exit(1) }
-	handler := otelhttp.NewHandler(api.NewServer(cloud, token, logger), "http.server")
+	handler := otelhttp.NewHandler(api.NewServer(cloud, token, os.Getenv("APP_VERSION"), logger), "http.server")
 	server := &http.Server{Addr: ":8443", Handler: handler, ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 15 * time.Second, WriteTimeout: 30 * time.Second, IdleTimeout: 60 * time.Second}
 	go func() {
 		ticker := time.NewTicker(3 * time.Second)

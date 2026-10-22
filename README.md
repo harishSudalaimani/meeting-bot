@@ -168,6 +168,8 @@ Content-Type: application/json
 
 `GET /bots/{job_id}` returns status and artifact key; `GET /bots/{job_id}/artifact` redirects authenticated callers to a 15-minute S3 download URL after completion; `POST /bots/{job_id}/cancel` requests cancellation. Supported URL hosts are `meet.google.com`, `teams.microsoft.com`, `zoom.us`, and `zoom.com`. Only `https` URLs are accepted. The initial auth model is one shared bearer token for a single learning environment; it is not per-customer identity or multi-tenant authorization.
 
+`GET /version` returns the API image tag as JSON, for example `{"version":"git-<commit-sha>"}`. It is unauthenticated and exposes only the deployment version.
+
 Job states: `REQUESTED → STARTING → JOINING → RECORDING → UPLOADING → COMPLETED`, with `FAILED`, `CANCEL_REQUESTED`, and `CANCELLED` terminal/error paths. Delivery is tracked separately as `SKIPPED`, `FAILED`, or `DELIVERED`.
 
 ## Limitations
