@@ -11,5 +11,5 @@ output "controller_role_arn" { value = aws_iam_role.controller.arn }
 output "meeting_bot_role_arn" { value = aws_iam_role.meeting_bot.arn }
 output "delivery_role_arn" { value = aws_iam_role.delivery.arn }
 output "api_repository" { value = var.api_repository }
-output "karpenter_ami_alias" { value = "al2023@${regex("v[0-9]{8}", jsondecode(data.aws_ssm_parameter.recommended_ami.value).image_name)}" }
+output "karpenter_ami_alias" { value = "al2023@${regex("v[0-9]{8}", jsondecode(nonsensitive(data.aws_ssm_parameter.recommended_ami.value)).image_name)}" }
 output "otel_collector_role_arn" { value = aws_iam_role.otel_collector.arn }

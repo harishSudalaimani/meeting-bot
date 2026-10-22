@@ -239,7 +239,7 @@ func (c *Cloud) EnqueueDelivery(ctx context.Context, jobID, key string) error {
 	if deliveryQueue() == "" { return nil }
 	body, err := json.Marshal(domain.DeliveryEvent{JobID: jobID, ArtifactKey: key, TraceContext: telemetry.InjectTrace(ctx)})
 	if err != nil { return err }
-	_, err := c.SQS.SendMessage(ctx, &sqs.SendMessageInput{QueueUrl: aws.String(deliveryQueue()), MessageBody: aws.String(string(body))})
+	_, err = c.SQS.SendMessage(ctx, &sqs.SendMessageInput{QueueUrl: aws.String(deliveryQueue()), MessageBody: aws.String(string(body))})
 	return err
 }
 
@@ -269,5 +269,5 @@ func randomID() string {
 	return fmt.Sprintf("%08x-%04x-%04x-%04x-%012x", b[0:4], b[4:6], b[6:8], b[8:10], b[10:16])
 }
 
-func OutboxQueueURL() string { return requestQueue() }
+func RequestQueueURL() string { return requestQueue() }
 func DeliveryQueueURL() string { return deliveryQueue() }

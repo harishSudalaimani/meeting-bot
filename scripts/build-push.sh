@@ -10,7 +10,7 @@ repos=$(terraform -chdir="$infra" output -json ecr_repositories)
 registry="${account}.dkr.ecr.${region}.amazonaws.com"
 aws ecr get-login-password --region "$region" | docker login --username AWS --password-stdin "$registry"
 for service in api controller meeting-bot delivery-worker; do
-  repository=$(jq -r --arg service "$service" '.value[$service]' <<<"$repos")
+  repository=$(jq -er --arg service "$service" '.[$service] | select(type == "string" and length > 0)' <<<"$repos")
   docker build --file "$repo_root/services/Dockerfile" --build-arg "SERVICE=$service" --tag "$repository:$tag" "$repo_root/services"
   docker push "$repository:$tag"
 done

@@ -13,3 +13,6 @@ coverage.out
 
 # Go tooling cache files
 services/go.sum.tmp
+
+# Saved Terraform plans can contain sensitive values
+tfplan*

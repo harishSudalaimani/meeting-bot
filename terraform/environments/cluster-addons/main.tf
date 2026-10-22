@@ -112,6 +112,7 @@ resource "helm_release" "karpenter" {
   wait       = true
   timeout    = 900
   values = [yamlencode({
+    replicas = 1
     settings = {
       clusterName     = local.infra.cluster_name
       clusterEndpoint = local.infra.cluster_endpoint
@@ -176,13 +177,23 @@ resource "helm_release" "external_dns" {
   version    = "1.19.0"
   wait       = true
   values = [yamlencode({
-    provider = { name = "aws" }
+    provider         = { name = "aws" }
+    sources          = ["gateway-httproute"]
+    policy           = "sync"
+    registry         = "txt"
+    txtOwnerId       = local.infra.cluster_name
+    domainFilters    = [local.infra.api_hostname]
+    gatewayNamespace = "meeting-bot"
     serviceAccount = {
       create      = true
       name        = "external-dns"
       annotations = { "eks.amazonaws.com/role-arn" = local.infra.external_dns_role_arn }
     }
-    extraArgs = ["--source=gateway-httproute", "--namespace=meeting-bot", "--gateway-name=bot-api", "--gateway-namespace=meeting-bot", "--domain-filter=${local.infra.api_hostname}", "--zone-id-filter=${local.infra.hosted_zone_id}", "--registry=txt", "--txt-owner-id=${local.infra.cluster_name}", "--policy=sync"]
+    extraArgs = {
+      "namespace"      = "meeting-bot"
+      "gateway-name"   = "bot-api"
+      "zone-id-filter" = local.infra.hosted_zone_id
+    }
     # sync removes records owned by this TXT owner when the Gateway disappears.
     logLevel = "info"
   })]
